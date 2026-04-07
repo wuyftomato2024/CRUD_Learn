@@ -1,10 +1,22 @@
-from fastapi import FastAPI ,HTTPException 
+from fastapi import FastAPI ,HTTPException ,Depends
 from fastapi.responses import JSONResponse
 from service import userCreate ,userDelete ,userGet,userAllGet,userPatch
 from model import userCreateModel ,userPatchModel
 import uvicorn
+from database import engine ,Base ,SessionLocal
+# from db_model import User
 
 app = FastAPI()
+
+# 创建所有继承自Base的所有表，路径是bind=engine这个接口
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try :
+        yield db
+    finally :
+        db.close()
 
 @app.exception_handler(HTTPException)
 def setError(request ,exc:HTTPException):
@@ -38,13 +50,16 @@ def getUser(userid :str):
     return response
 
 @app.get("/get")
-def getAllUser():
-    response = userAllGet()
+# 意为user_name的类型是str或者空值 ，默认是 没东西
+def getAllUser(user_name :str|None  =None):
+    response = userAllGet(user_name)
     return response
 
 @app.post("/user")
-def postUser(body : userCreateModel):
+# db 这个参数由 FastAPI 通过 Depends(get_db) 自动提供
+def postUser(body : userCreateModel ,db =Depends(get_db)):
     response = userCreate(
+        db = db ,
         userid = body.userid ,
         user_name = body.user_name
     )

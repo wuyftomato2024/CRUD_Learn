@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Any
 
 class userCreateModel(BaseModel):
     userid :str 
@@ -6,3 +7,7 @@ class userCreateModel(BaseModel):
 
 class userPatchModel(BaseModel):
     user_name : str | None = None
+
+class apiResponse(BaseModel):
+    status :str
+    data : Any
