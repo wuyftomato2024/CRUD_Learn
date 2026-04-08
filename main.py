@@ -45,14 +45,19 @@ def index():
     return "fastapi was running"
 
 @app.get("/user/{userid}")
-def getUser(userid :str):
-    response = userGet(userid=userid)
+def getUser(userid :str ,db =Depends(get_db)):
+    response = userGet(
+        userid=userid ,
+        db = db)
     return response
 
 @app.get("/get")
 # 意为user_name的类型是str或者空值 ，默认是 没东西
-def getAllUser(user_name :str|None  =None):
-    response = userAllGet(user_name)
+def getAllUser(user_name :str|None  =None ,db = Depends(get_db)):
+    response = userAllGet(
+        user_name = user_name,
+        db = db
+        )
     return response
 
 @app.post("/user")
@@ -66,16 +71,17 @@ def postUser(body : userCreateModel ,db =Depends(get_db)):
     return response
 
 @app.delete("/user/{userid}")
-def deleteUser(userid :str):
-    response = userDelete(userid=userid)
+def deleteUser(userid :str ,db =Depends(get_db)):
+    response = userDelete(
+        userid=userid , 
+        db=db)
     return response
 
 @app.patch("/user/{userid}")
-def patchUser(userid:str,body :userPatchModel):
+def patchUser(userid:str,body :userPatchModel,db = Depends(get_db)):
     response = userPatch(
-        userid=userid ,
-        body =body
+        userid = userid ,
+        user_name = body.user_name,
+        db = db
         )
     return response
-
-
