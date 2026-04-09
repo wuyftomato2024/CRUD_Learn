@@ -1,0 +1,8 @@
+def get_external_users():
+    test_data =[
+        {"id":1,"userid": "001", "user_name": "onion","is_active": False,"updated_at":"2026-04-09T04:32:12"},
+        {"id":2,"userid": "003", "user_name": "apple","is_active": False,"updated_at":"2026-04-09T04:52:43"},
+        {"id":3,"userid": "002", "user_name": "nashi","is_active": True,"updated_at":"2026-04-09T04:55:17"},
+        {"id":4,"userid": "004", "user_name": "boy","is_active": True,"updated_at":"2026-04-09T04:59:17"}
+        ]
+    return test_data

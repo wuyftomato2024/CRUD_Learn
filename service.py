@@ -5,7 +5,7 @@ from db_model import User
 # ***********
 # 创建user
 # ***********
-def userCreate(db ,userid ,user_name):
+def userCreate(db ,userid ,user_name ,is_active):
     userid = userid.strip()
     user_name = user_name.strip()
 
@@ -14,7 +14,8 @@ def userCreate(db ,userid ,user_name):
         raise HTTPException(status_code=400,detail="user was been added")
     new_user =User(
         userid = userid,
-        user_name = user_name
+        user_name = user_name ,
+        is_active = is_active
     )
     db.add(new_user)
     db.commit()
@@ -85,7 +86,9 @@ def userAllGet(db ,user_name):
             result.append({
                 "id":user_data.id,
                 "userid":user_data.userid,
-                "user_name":user_data.user_name
+                "user_name":user_data.user_name,
+                "updated_at":user_data.updated_at,
+                "is_active":user_data.is_active
             })
     else :
         user = db.query(User).all()
@@ -93,7 +96,9 @@ def userAllGet(db ,user_name):
             result.append({
                 "id":user_data.id,
                 "userid":user_data.userid,
-                "user_name":user_data.user_name
+                "user_name":user_data.user_name ,
+                "updated_at":user_data.updated_at,
+                "is_active":user_data.is_active
             })
 
     return apiResponse(
@@ -107,7 +112,7 @@ def userAllGet(db ,user_name):
 # ***********
 # 更新/修改user数据
 # ***********    
-def userPatch(db ,userid ,user_name):
+# def userPatch(db ,userid ,user_name):
     userid = userid.strip()
     user_name = user_name.strip()
 
@@ -130,7 +135,53 @@ def userPatch(db ,userid ,user_name):
             "updated":True ,
             "data":user_data(old_user)
             }
-    ) 
+    )
+
+# ***********
+# 更新/修改user数据(status更新)
+# ***********    
+def userPatch(db ,userid ,is_active,user_name):
+    userid = userid.strip()
+    
+
+    old_user = db.query(User).filter(User.userid == userid).first()
+    if not old_user:
+        raise HTTPException(status_code=404,detail="user is not found")
+    if is_active is None:
+        raise HTTPException(status_code=400 ,detail="user_name is required")
+    old_user_name = db.query(User).filter(User.user_name == user_name , User.userid != userid).first()
+    if old_user_name:
+        raise HTTPException(status_code=400 ,detail="user_name already exists")
+    else:
+        old_user.is_active = is_active
+        db.commit()
+        db.refresh(old_user)
+
+        return apiResponse(
+        status = "ok" ,
+        data = {
+            "updated":True ,
+            "data":user_data(old_user)
+            }
+    )
+
+
+# ***********
+# 获取user,比较用
+# ***********
+def userAllGetCompare(db):
+    result = []
+    user = db.query(User).all()
+    for user_data in user:
+        result.append({
+            "id":user_data.id,
+            "userid":user_data.userid,
+            "user_name":user_data.user_name ,
+            "updated_at":user_data.updated_at
+        })
+
+    return result
+
 
 # 返回对象dict化模板
 # 传参不一定需要和声明函数时一模一样的参数名字，调用函数写别的名字，函数本体会自动给转换成需要的函数的原始形态
@@ -138,5 +189,8 @@ def user_data(user):
      return {
         "id": user.id,
         "userid": user.userid,
-        "user_name": user.user_name
+        "user_name": user.user_name,
+        "is_active":user.is_active,
+        "updated_at":user.updated_at
+        
     }  

@@ -4,7 +4,7 @@ from service import userCreate ,userDelete ,userGet,userAllGet,userPatch
 from model import userCreateModel ,userPatchModel
 import uvicorn
 from database import engine ,Base ,SessionLocal
-# from db_model import User
+from sync_service import sync_users
 
 app = FastAPI()
 
@@ -66,7 +66,8 @@ def postUser(body : userCreateModel ,db =Depends(get_db)):
     response = userCreate(
         db = db ,
         userid = body.userid ,
-        user_name = body.user_name
+        user_name = body.user_name,
+        is_active = body.is_active
     )
     return response
 
@@ -81,7 +82,13 @@ def deleteUser(userid :str ,db =Depends(get_db)):
 def patchUser(userid:str,body :userPatchModel,db = Depends(get_db)):
     response = userPatch(
         userid = userid ,
+        is_active = body.is_active,
         user_name = body.user_name,
         db = db
         )
+    return response
+
+@app.get("/data")
+def test_data_app(db=Depends(get_db)):
+    response = sync_users(db = db)
     return response
