@@ -16,3 +16,14 @@ class User(Base):
     # __tablename__ = 这张表叫什么
     # unique=True = 不能重复
     # index=True = 更方便查找
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+
+    # 数字类型(int)配合主key，会自动分配数字
+    id = Column(Integer ,primary_key=True ,index=True)
+    userid = Column(String(50) ,nullable=False)
+    user_name = Column(String(100) ,nullable=False)
+    group_name = Column(String(100), nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+

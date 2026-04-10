@@ -1,7 +1,7 @@
 from fastapi import FastAPI ,HTTPException ,Depends
 from fastapi.responses import JSONResponse
-from service import userCreate ,userDelete ,userGet,userAllGet,userPatch
-from model import userCreateModel ,userPatchModel
+from service import userCreate ,userDelete ,userGet,userAllGet,userPatch ,groupMembersCreate ,groupMembersDelete ,groupMemberList
+from model import userCreateModel ,userPatchModel ,userActivePatchModel ,groupMemberCreateModel
 import uvicorn
 from database import engine ,Base ,SessionLocal
 from sync_service import sync_users
@@ -75,15 +75,16 @@ def postUser(body : userCreateModel ,db =Depends(get_db)):
 def deleteUser(userid :str ,db =Depends(get_db)):
     response = userDelete(
         userid=userid , 
-        db=db)
+        db=db
+        )
     return response
 
 @app.patch("/user/{userid}")
-def patchUser(userid:str,body :userPatchModel,db = Depends(get_db)):
+def patchUser(userid:str,user_name:str,body :userActivePatchModel,db = Depends(get_db)):
     response = userPatch(
         userid = userid ,
         is_active = body.is_active,
-        user_name = body.user_name,
+        user_name = user_name,
         db = db
         )
     return response
@@ -91,4 +92,28 @@ def patchUser(userid:str,body :userPatchModel,db = Depends(get_db)):
 @app.get("/data")
 def test_data_app(db=Depends(get_db)):
     response = sync_users(db = db)
+    return response
+
+@app.get("/group")
+def getGroupMemberUser(db = Depends(get_db)):
+    response = groupMemberList(db=db)
+    return response
+
+@app.post("/group")
+# db 这个参数由 FastAPI 通过 Depends(get_db) 自动提供
+def postGroupMemberUser(body : groupMemberCreateModel ,db =Depends(get_db)):
+    response = groupMembersCreate(
+        db = db ,
+        userid = body.userid ,
+        user_name = body.user_name,
+        group_name = body.group_name
+    )
+    return response
+
+@app.delete("/group/{userid}")
+def deleteGroupMemberUser(userid :str ,db = Depends(get_db)):
+    response = groupMembersDelete(
+        db = db ,
+        userid = userid
+    )
     return response

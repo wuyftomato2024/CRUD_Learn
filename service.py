@@ -1,6 +1,6 @@
 from fastapi import HTTPException 
 from model import apiResponse
-from db_model import User
+from db_model import User ,GroupMember
 
 # ***********
 # 创建user
@@ -110,48 +110,17 @@ def userAllGet(db ,user_name):
     )  
 
 # ***********
-# 更新/修改user数据
-# ***********    
-# def userPatch(db ,userid ,user_name):
-    userid = userid.strip()
-    user_name = user_name.strip()
-
-    old_user = db.query(User).filter(User.userid == userid).first()
-    if not old_user:
-        raise HTTPException(status_code=404,detail="user is not found")
-    if not user_name:
-        raise HTTPException(status_code=400 ,detail="user_name is required")
-    old_user_name = db.query(User).filter(User.user_name == user_name , User.userid != userid).first()
-    if old_user_name:
-        raise HTTPException(status_code=400 ,detail="user_name already exists")
-    else:
-        old_user.user_name = user_name
-        db.commit()
-        db.refresh(old_user)
-
-        return apiResponse(
-        status = "ok" ,
-        data = {
-            "updated":True ,
-            "data":user_data(old_user)
-            }
-    )
-
-# ***********
 # 更新/修改user数据(status更新)
 # ***********    
 def userPatch(db ,userid ,is_active,user_name):
     userid = userid.strip()
     
-
-    old_user = db.query(User).filter(User.userid == userid).first()
+    # 查找老userid
+    old_user = db.query(User).filter(User.userid == userid ,User.user_name == user_name).first()
     if not old_user:
         raise HTTPException(status_code=404,detail="user is not found")
     if is_active is None:
         raise HTTPException(status_code=400 ,detail="user_name is required")
-    old_user_name = db.query(User).filter(User.user_name == user_name , User.userid != userid).first()
-    if old_user_name:
-        raise HTTPException(status_code=400 ,detail="user_name already exists")
     else:
         old_user.is_active = is_active
         db.commit()
@@ -165,9 +134,8 @@ def userPatch(db ,userid ,is_active,user_name):
             }
     )
 
-
 # ***********
-# 获取user,比较用
+# 获取user,数据比较用
 # ***********
 def userAllGetCompare(db):
     result = []
@@ -177,10 +145,77 @@ def userAllGetCompare(db):
             "id":user_data.id,
             "userid":user_data.userid,
             "user_name":user_data.user_name ,
+            "is_active":user_data.is_active,
             "updated_at":user_data.updated_at
         })
 
     return result
+
+# ***********
+# 获取群组用
+# ***********
+def groupMemberList(db):
+    result = []
+    members = db.query(GroupMember).all()
+    for member in members :
+        result.append({
+            "id":member.id,
+            "userid":member.userid,
+            "user_name":member.user_name ,
+            "group_name":member.group_name ,
+            "updated_at":member.updated_at
+        })
+    
+    return result
+
+# ***********
+# 在群组中新增用户
+# ***********
+def groupMembersCreate(db,userid,user_name,group_name):
+    old_user = db.query(GroupMember).filter(GroupMember.userid == userid)
+    if not old_user :
+        raise HTTPException(status_code=404 ,detail="") 
+    new_user =GroupMember(
+        userid = userid,
+        user_name = user_name,
+        group_name = group_name 
+    ) 
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return apiResponse(
+        status = "ok" ,
+        data = {
+            "created":True ,
+            "data":{
+                "id": new_user.id,
+                "userid": new_user.userid,
+                "user_name": new_user.user_name,
+                "group_name":new_user.group_name,
+                "updated_at":new_user.updated_at   
+            }
+        }
+    )
+
+# ***********
+# 从群组中移除用户
+# ***********
+def groupMembersDelete(db ,userid):
+    old_user = db.query(GroupMember).filter(GroupMember.userid == userid).first()
+    if not old_user :
+        raise HTTPException(status_code=404 ,detail="") 
+    
+    db.delete(old_user)
+    db.commit()
+
+    return apiResponse(
+        status = "ok" ,
+        data = {
+            "deleted":True
+        }
+    ) 
 
 
 # 返回对象dict化模板
@@ -191,6 +226,5 @@ def user_data(user):
         "userid": user.userid,
         "user_name": user.user_name,
         "is_active":user.is_active,
-        "updated_at":user.updated_at
-        
+        "updated_at":user.updated_at    
     }  
