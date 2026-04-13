@@ -1,7 +1,7 @@
 from fastapi import FastAPI ,HTTPException ,Depends
 from fastapi.responses import JSONResponse
 from service import userCreate ,userDelete ,userGet,userAllGet,userPatch ,groupMembersCreate ,groupMembersDelete ,groupMemberList
-from model import userCreateModel ,userPatchModel ,userActivePatchModel ,groupMemberCreateModel
+from model import userCreateModel ,userActivePatchModel ,groupMemberCreateModel
 import uvicorn
 from database import engine ,Base ,SessionLocal
 from sync_service import sync_users

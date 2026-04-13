@@ -5,6 +5,6 @@ def get_external_users():
         {"id":3,"userid": "002", "user_name": "nashi","is_active": True,"updated_at":"2026-04-09T04:55:17"},
         {"id":4,"userid": "004", "user_name": "boy","is_active": True,"updated_at":"2026-04-09T04:59:17"},
         {"id":5,"userid": "005", "user_name": "girl","is_active": True,"updated_at":"2026-04-09T04:59:17"},
-        {"id":6,"userid": "006", "user_name": "mtf","is_active": False,"updated_at":"2026-04-09T04:59:17"}
+        {"id":6,"userid": "006", "user_name": "mtf","is_active": True,"updated_at":"2026-04-13 02:10:26"}
         ]
     return test_data

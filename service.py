@@ -172,8 +172,8 @@ def groupMemberList(db):
 # 在群组中新增用户
 # ***********
 def groupMembersCreate(db,userid,user_name,group_name):
-    old_user = db.query(GroupMember).filter(GroupMember.userid == userid)
-    if not old_user :
+    old_user = db.query(GroupMember).filter(GroupMember.userid == userid).first()
+    if old_user :
         raise HTTPException(status_code=404 ,detail="") 
     new_user =GroupMember(
         userid = userid,

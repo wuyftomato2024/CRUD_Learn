@@ -2,6 +2,7 @@ from service import userAllGetCompare
 from test_data import get_external_users
 from service import userPatch ,userCreate ,groupMembersCreate ,groupMembersDelete ,groupMemberList
 from datetime import datetime
+from db_model import GroupMember ,User
 
 def sync_users(db):
 
@@ -11,7 +12,13 @@ def sync_users(db):
 
     db_user_map ={}
     db_member_map ={}
+
+    # 计数器的初始化
     update_count = 0
+    user_patch = 0
+    user_create = 0
+    member_create = 0
+    member_delete = 0
 
     # 取出db里面的每个值，并且存进去dict里面
     for user_data in user_datas:
@@ -34,20 +41,47 @@ def sync_users(db):
 
         if test_userid in db_user_map :
             if db_user_map[test_userid]["updated_at"] < test_time:                    
-                response = userPatch(
-                        db = db,
-                        userid=test_userid ,
-                        user_name=test_user_name,
-                        is_active=is_active
-                        )
-                print("user patch is sussess")
+                userPatch(
+                    db = db,
+                    userid=test_userid ,
+                    user_name=test_user_name,
+                    is_active=is_active
+                    )
+                
+                # 更新map的数据，以达到最新状态
+                user = db.query(User).filter(User.userid == test_userid).first()
+                db_user_map[test_userid] ={
+                    "userid" :user.userid ,
+                    "user_name" :user.user_name,
+                    "is_active" :user.is_active,
+                    "updated_at" :user.updated_at
+                }
+
                 update_count += 1
+                user_patch += 1
+                print("user is updated")  
             else :
                 pass
         else :
-            response = userCreate(db ,userid=test_userid ,user_name=test_user_name,is_active=is_active)
+            userCreate(
+                db ,
+                userid=test_userid ,
+                user_name=test_user_name,
+                is_active=is_active
+                )
+            
+            # 更新map的数据，以达到最新状态
+            user = db.query(User).filter(User.userid == test_userid).first()
+            db_user_map[test_userid] ={
+                "userid" :user.userid ,
+                "user_name" :user.user_name ,
+                "is_active" :user.is_active ,
+                "updated_at" :user.updated_at
+            }
+
             update_count += 1
-            print("user_create is sussess")   
+            user_create += 1
+            print("user is created")   
         
 
         # 核心思路是。通过布尔值来判断，这一条数据，到底该不该存在于member里面。所以这就需要两个db表的数据以及一个外部测试数据，来作三方的对比
@@ -56,27 +90,57 @@ def sync_users(db):
                 print("True is sussess")
                 pass
             else:
-                response = groupMembersCreate(
-                        db =db ,
-                        userid=test_userid ,
-                        user_name=test_user_name,
-                        group_name =group_name
-                    )
-                print("member_create is sussess")    
+                groupMembersCreate(
+                    db =db ,
+                    userid=test_userid ,
+                    user_name=test_user_name,
+                    group_name =group_name
+                )
+
+                # 更新map的数据，以达到最新状态
+                user = db.query(GroupMember).filter(GroupMember.userid ==test_userid).first()
+                
+                db_member_map[test_userid] = {
+                    "userid": user.userid,
+                    "user_name": user.user_name,
+                    "group_name": user.group_name ,
+                    "updated_at" :user.updated_at
+                }
+
+                update_count += 1
+                member_create += 1 
+                print("member was created")                   
         else :
             if test_userid in db_member_map :
-                response = groupMembersDelete(
-                        db =db ,
-                        userid=test_userid ,
-                    )
-                print("member delete is sussess")
+                groupMembersDelete(
+                    db =db ,
+                    userid=test_userid ,
+                )
+                
+                # 更新map的数据，以达到最新状态
+                del db_member_map[test_userid]
+
+                update_count += 1
+                member_delete += 1 
+                print("member was deleted")
             else:
                 pass  
                 print("False is sussess")
 
-    return {
+    result = {
          "sync":"ok",
-         "hit":update_count,
-        #  "data":response
+         "hit":update_count
          }
+    
+    if user_patch >0 :
+        result["user_patch"] = user_patch
+    if user_create >0 :
+        result["user_create"] = user_create
+    if member_create >0 :
+        result["member_create"] = member_create
+    if member_delete >0 :
+        result["member_delete"] = member_delete
+
+    return result
+         
 
